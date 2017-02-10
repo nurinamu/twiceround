@@ -1,0 +1,14 @@
+{
+  "manifest_version": 2,
+
+  "name": "TwiceRound",
+  "description": "This extension sets the TWICE image to your new tab's background.",
+  "version": "0.1",
+
+  "chrome_url_overrides" : {
+    "newtab" : "html/index.html"
+  },
+  "permissions": [
+    "storage", "tabs"
+  ]
+}

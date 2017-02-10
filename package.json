@@ -1,0 +1,26 @@
+{
+  "name": "twiceround",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nurinamu/twiceround.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nurinamu/twiceround/issues"
+  },
+  "homepage": "https://github.com/nurinamu/twiceround#readme",
+  "description": "",
+  "dependencies": {
+    "jquery": "^3.1.1",
+    "vue": "^2.1.10"
+  },
+  "devDependencies": {
+    "webpack": "^2.2.1"
+  }
+}
