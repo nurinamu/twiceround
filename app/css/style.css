@@ -1,0 +1,19 @@
+body {
+    background-size : cover;
+}
+
+#settings {
+    display : none;
+}
+
+#imgList {
+    position : fixed;
+    bottom : 0;
+    width : 100%;
+    overflow-x: scroll;
+}
+
+#imgList img {
+    height : 100px;
+    cursor : hand;
+}

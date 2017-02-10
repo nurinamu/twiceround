@@ -6,7 +6,7 @@
   "version": "0.1",
 
   "chrome_url_overrides" : {
-    "newtab" : "html/index.html"
+    "newtab" : "index.html"
   },
   "permissions": [
     "storage", "tabs"

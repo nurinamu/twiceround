@@ -1,4 +1,5 @@
 .idea/
+apiKey
 node_modules/
 yarn.lock
 app/js/bundle.js
