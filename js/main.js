@@ -72,11 +72,11 @@ function cse(apiKey, offset) {
         type : 'GET',
         data : {
             key : apiKey,
-            cx : '014447932292512077827:p1xwixchex4',
+            cx : '017778292064153678241:lc5ig_122zu',
             searchType : 'image',
             imgSize : 'xxlarge',
             fields : "items(link)",
-            q : '트와이스',
+            q : 'twice',
             start : offset
         },
         success : function(resp){
@@ -95,9 +95,14 @@ function cse(apiKey, offset) {
                     });
                 });
             } else {
-                setOffset(0, function(){
-                    start(apiKey);
-                });
+                if (offset) {
+                    setOffset(0, function(){
+                        start(apiKey);
+                    });
+                } else {
+                    console.log("img is not found");
+                }
+
             }
         }
     })
