@@ -2,10 +2,25 @@ body {
     background-size : cover;
 }
 
+.logo {
+    font-size : 15px;
+    color : #AAAAAA;
+    opacity : 0.8;
+    text-decoration: none;
+}
+
 #menu {
     position : fixed;
-    top : 0;
-    right : 0;
+    top : 5px;
+    right : 5px;
+    opacity: 0.8;
+    color : #AAAAAA;
+    font-size : 20px;
+}
+
+#menu a {
+    cursor : hand;
+    right-margin : 5px;
 }
 
 #settings {
