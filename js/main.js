@@ -5,20 +5,20 @@ init();
 
 function init() {
     $("#imgBtn").click(main);
-    $("#clearBtn").click(cse);
-    $("#appendBtn").click(addMoreImage);
+    $("#clearBtn").click(clearAll);
     $("#addApiBtn").click(addApi);
     $("#listBtn").click(showStored);
 }
 
-var offset = 0;
+var twiceApiKey;
 
 function main() {
     console.log("init twiceround");
-    chrome.storage.sync.get("twice_meta", function(data){
+    getFromStorage("twice_cse_api_key", function(data){
         if (data) {
-            if (data.twice_meta && data.twice_meta.apiKey) {
-                start(data.twice_meta.apiKey);
+            twiceApiKey = data.twice_cse_api_key;
+            if (twiceApiKey) {
+                start(twiceApiKey);
             } else {
                 openApiInput();
             }
@@ -36,26 +36,28 @@ function openApiInput() {
 function addApi() {
     var newKey = $.trim($("#cseApi").val());
     if (newKey != '') {
-        chrome.storage.sync.set({
-            "twice_meta" : {
-                apiKey : newKey
-            }
+        twiceApiKey = newKey;
+        setToStorage({
+            "twice_cse_api_key" : newKey
         }, function() {
-           start(newKey);
+           start();
         });
     }
 }
 
 function start(apiKey) {
-    chrome.storage.sync.get("twice_items", function(data){
-        console.log(data);
-        if (data && data.twice_items.length > 0) {
-            console.log("get from cache!");
-            setBackgroundWithArr(data.twice_items);
-        } else {
-            console.log("get from search results!");
-            cse(apiKey);
-        }
+    getOffset(function(offset) {
+        getFromStorage("twice_items", function(data){
+            console.log(data);
+            if (data && data.twice_items.length > offset) {
+                console.log("get from cache! ->"+offset);
+                setBackground(data.twice_items[offset]);
+                setOffset(offset+1, function(){});
+            } else {
+                console.log("get search results ->"+offset);
+                cse(apiKey, offset);
+            }
+        });
     });
 }
 
@@ -63,7 +65,8 @@ function start(apiKey) {
 /**
  * google custom search engine을 사용
  */
-function cse(apiKey) {
+function cse(apiKey, offset) {
+    if (offset == 0) offset = undefined;
     $.ajax({
         url : 'https://www.googleapis.com/customsearch/v1?parameters',
         type : 'GET',
@@ -73,34 +76,61 @@ function cse(apiKey) {
             searchType : 'image',
             imgSize : 'xxlarge',
             fields : "items(link)",
-            q : '나연'
+            q : '트와이스',
+            start : offset
         },
         success : function(resp){
             console.log(resp);
-            var links = new Array();
-            for(key in resp.items) {
-                links.push(resp.items[key].link);
+            if (resp.items) {
+                getFromStorage("twice_items", function(data) {
+                    var twiceItems = data.twice_items;
+                    if (twiceItems == undefined) {
+                        twiceItems = [];
+                    }
+                    for(key in resp.items) {
+                        twiceItems.push(resp.items[key].link);
+                    }
+                    storeItems(twiceItems, function() {
+                        start(apiKey);
+                    });
+                });
+            } else {
+                setOffset(0, function(){
+                    start(apiKey);
+                });
             }
-
-            storeData(links);
-
-            setBackgroundWithArr(links);
         }
     })
 }
 
-function addMoreImage() {
-
-}
-
-function storeData(data) {
-    chrome.storage.sync.set({twice_items:data}, function(){
-        console.log("saved! -> "+data.length);
-    });
+function storeItems(data, callback) {
+    setToStorage({twice_items:data}, callback);
 }
 
 function setBackgroundWithArr(items) {
     $("body").css('background-image','url("'+selectData(items)+'")');
+}
+
+function getOffset(callback) {
+    getFromStorage("twice_offset", function(data){
+        if (!isNaN(data.twice_offset)) {
+            callback(data.twice_offset);
+        } else {
+            callback(0);
+        }
+    });
+}
+
+function setOffset(offset, callback) {
+    setToStorage({twice_offset:offset}, callback);
+}
+
+function getFromStorage(key, callback) {
+    chrome.storage.sync.get(key, callback);
+}
+
+function setToStorage(data, callback) {
+    chrome.storage.sync.set(data, callback);
 }
 
 function setBackground(url) {
@@ -112,7 +142,7 @@ function selectData(datas) {
 }
 
 function showStored() {
-    chrome.storage.sync.get("twice_items", function(data){
+    getFromStorage("twice_items", function(data){
         console.log(data);
         if (data && data.twice_items.length > 0) {
             console.log("get from cache to list!");
@@ -131,5 +161,13 @@ function showStored() {
             imgTable.append(imgRow);
             $("#imgList").append(imgTable);
         }
+    });
+}
+
+function clearAll() {
+    storeItems([], function(){
+        setOffset(0, function(){
+            console.log("clear all data");
+        });
     });
 }
