@@ -1,5 +1,6 @@
 //import $ from 'jquery';
 var $ = require('jquery');
+var maxOffset = 100;
 window.$ = window.jquery = $;
 init();
 
@@ -8,6 +9,8 @@ function init() {
     $("#clearBtn").click(clearAll);
     $("#addApiBtn").click(addApi);
     $("#listBtn").click(showStored);
+
+    main();
 }
 
 var twiceApiKey;
@@ -49,9 +52,9 @@ function start(apiKey) {
     getOffset(function(offset) {
         getFromStorage("twice_items", function(data){
             console.log(data);
-            if (data && data.twice_items.length > offset) {
+            if (data && data.twice_items.length >= offset) {
                 console.log("get from cache! ->"+offset);
-                setBackground(data.twice_items[offset]);
+                setBackground(data.twice_items[offset-1]);
                 setOffset(offset+1, function(){});
             } else {
                 console.log("get search results ->"+offset);
@@ -66,7 +69,6 @@ function start(apiKey) {
  * google custom search engine을 사용
  */
 function cse(apiKey, offset) {
-    if (offset == 0) offset = undefined;
     $.ajax({
         url : 'https://www.googleapis.com/customsearch/v1?parameters',
         type : 'GET',
@@ -96,7 +98,7 @@ function cse(apiKey, offset) {
                 });
             } else {
                 if (offset) {
-                    setOffset(0, function(){
+                    setOffset(1, function(){
                         start(apiKey);
                     });
                 } else {
@@ -121,12 +123,15 @@ function getOffset(callback) {
         if (!isNaN(data.twice_offset)) {
             callback(data.twice_offset);
         } else {
-            callback(0);
+            callback(1);
         }
     });
 }
 
 function setOffset(offset, callback) {
+    if (offset > maxOffset) {
+        offset = 1;
+    }
     setToStorage({twice_offset:offset}, callback);
 }
 
@@ -171,7 +176,7 @@ function showStored() {
 
 function clearAll() {
     storeItems([], function(){
-        setOffset(0, function(){
+        setOffset(1, function(){
             console.log("clear all data");
         });
     });
