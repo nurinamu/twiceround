@@ -9,6 +9,7 @@ function init() {
     $("#clearBtn").click(clearAll);
     $("#addApiBtn").click(addApi);
     $("#listBtn").click(toggleStored);
+    $("#settingsBtn").click(toggleSettings);
 
     main();
 }
@@ -206,4 +207,8 @@ function clearAll() {
             console.log("clear all data");
         });
     });
+}
+
+function toggleSettings() {
+    $("#settings").toggle();
 }
