@@ -1,6 +1,7 @@
 //import $ from 'jquery';
 var $ = require('jquery');
 var maxOffset = 100;
+var queryStr = 'twice';
 window.$ = window.jquery = $;
 init();
 
@@ -98,7 +99,7 @@ function cse(apiKey, cx, offset) {
             cx: cx,
             searchType: 'image',
             imgSize: 'xxlarge',
-            q: 'twice',
+            q: queryStr,
             start: offset
         },
         success: function (resp) {
