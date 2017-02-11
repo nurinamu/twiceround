@@ -201,8 +201,9 @@ function showImgList() {
                 imgCell = $("<td></td>");
                 newImg = $("<img></img>");
                 newImg.attr("src", data.twice_items[key].thumbnail);
+                newImg.attr("data-url", data.twice_items[key].url);
                 newImg.click(function (obj) {
-                    setBackground(data.twice_items[key].url);
+                    setBackground($(obj.target).attr("data-url"));
                 });
                 imgCell.append(newImg);
                 imgRow.append(imgCell);
