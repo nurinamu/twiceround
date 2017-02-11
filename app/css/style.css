@@ -2,6 +2,12 @@ body {
     background-size : cover;
 }
 
+#menu {
+    position : fixed;
+    top : 0;
+    right : 0;
+}
+
 #settings {
     display : none;
 }
@@ -11,6 +17,7 @@ body {
     bottom : 0;
     width : 100%;
     overflow-x: scroll;
+    display : none;
 }
 
 #imgList img {
