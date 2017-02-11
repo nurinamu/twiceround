@@ -14,17 +14,15 @@ function init() {
     main();
 }
 
-var twiceApiKey;
 var isLandscape;
 
 function main() {
     isLandscape = window.innerWidth > window.innerHeight;
     console.log("init twiceround->isLandscape[" + isLandscape + "]");
-    getFromStorage("twice_cse_api_key", function (data) {
+    getFromStorage(["twice_cse_api_key", "twice_cse_cx"], function (data) {
         if (data) {
-            twiceApiKey = data.twice_cse_api_key;
-            if (twiceApiKey) {
-                start(twiceApiKey);
+            if (data.twice_cse_api_key && data.twice_cse_cx) {
+                start(data.twice_cse_api_key, data.twice_cse_cx);
             } else {
                 openApiInput();
             }
@@ -41,17 +39,29 @@ function openApiInput() {
 
 function addApi() {
     var newKey = $.trim($("#cseApi").val());
+    var newCx = $.trim($("#cx").val());
+    if (newKey == '') {
+        alert("api key is needed.");
+        return;
+    }
+    if (newCx == '') {
+        alert("cx value is needed");
+        return
+    }
     if (newKey != '') {
-        twiceApiKey = newKey;
         setToStorage({
-            "twice_cse_api_key": newKey
+            "twice_cse_api_key": newKey,
+            "twice_cse_cx": newCx
         }, function () {
-            start();
+            start(newKey, newCx);
         });
     }
 }
 
-function start(apiKey) {
+function start(apiKey, cx) {
+    $("#cseApi").val(apiKey);
+    $("#cx").val(cx);
+
     getOffset(function (offset) {
         getFromStorage("twice_items", function (data) {
             console.log(data);
@@ -65,11 +75,11 @@ function start(apiKey) {
                     setOffset(offset + 1, function () {
                     });
                     console.log("not matched orientation. go next");
-                    start(apiKey);
+                    start(apiKey, cx);
                 }
             } else {
                 console.log("get search results ->" + offset);
-                cse(apiKey, offset);
+                cse(apiKey, cx, offset);
             }
         });
     });
@@ -79,13 +89,13 @@ function start(apiKey) {
 /**
  * google custom search engine을 사용
  */
-function cse(apiKey, offset) {
+function cse(apiKey, cx, offset) {
     $.ajax({
         url: 'https://www.googleapis.com/customsearch/v1?parameters',
         type: 'GET',
         data: {
             key: apiKey,
-            cx: '017778292064153678241:lc5ig_122zu',
+            cx: cx,
             searchType: 'image',
             imgSize: 'xxlarge',
             q: 'twice',
@@ -107,14 +117,14 @@ function cse(apiKey, offset) {
                         });
                     }
                     storeItems(twiceItems, function () {
-                        start(apiKey);
+                        start(apiKey, cx);
                         showImgList();
                     });
                 });
             } else {
                 if (offset) {
                     setOffset(1, function () {
-                        start(apiKey);
+                        start(apiKey, cx);
                     });
                 } else {
                     console.log("img is not found");

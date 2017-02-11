@@ -9,7 +9,26 @@ body {
 }
 
 #settings {
+    position : fixed;
+    top : 30px;
+    right : 0px;
     display : none;
+    background : rgba(255,255,255,0.8);
+    width : 400px;
+}
+
+#settings td {
+    font-size: 8pt;
+}
+
+#settings a {
+    font-size : 6pt;
+    text-decoration: underline;
+    color : blue;
+}
+
+#settings .txt {
+    width : 250px;
 }
 
 #imgList {

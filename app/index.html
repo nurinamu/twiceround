@@ -1,13 +1,33 @@
 <div id="menu">
-    <span>트와이스 만세 - 와우사나연</span>
     <input type="button" value="show" id="listBtn" />
     <input type="button" value="settings" id="settingsBtn" />
 </div>
 <div id="settings">
-    <input type="button" value="이미지" id="imgBtn" />
-    <input type="button" value="clear" id="clearBtn" />
-    <input type="text" id="cseApi">
-    <input type="button" value="register" id="addApiBtn" />
+    <table>
+        <tr>
+            <td><a href="https://console.developers.google.com/apis/credentials" target="_blank">Google APIkey</a></td>
+            <td><input type="text" id="cseApi" class="txt"></td>
+        </tr>
+        <tr>
+            <td><a href="https://cse.google.com/all" target="_blank">Custom Search Engine ID</a></td>
+            <td><input type="text" id="cx" class="txt"></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="button" value="적용" id="addApiBtn" /></td>
+        </tr>
+        <tr>
+            <td>다음 이미지</td>
+            <td><input type="button" value="불러오기" id="imgBtn" /></td>
+        </tr>
+        <tr>
+            <td>캐싱 이미지 삭제</td>
+            <td><input type="button" value="삭제" id="clearBtn" /></td>
+        </tr>
+        <tr>
+            <td colspan="2">만든이 : nurinamu (엘리츠:우와사나연) <a href="https://github.com/nurinamu/twiceround" target="_blank">Github</a></td>
+        </tr>
+    </table>
 </div>
 <div id="imgList"><table></table></div>
 
