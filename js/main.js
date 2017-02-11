@@ -169,6 +169,7 @@ function setToStorage(data, callback) {
 }
 
 function setBackground(url) {
+    setOriginInfo(url);
     $("body").css('background-image', 'url("' + url + '")');
 }
 
@@ -221,4 +222,9 @@ function clearAll() {
 
 function toggleSettings() {
     $("#settings").toggle();
+}
+
+function setOriginInfo(url) {
+    $("#origin a").attr("href", url);
+    $("#origin a").text(url);
 }

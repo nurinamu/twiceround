@@ -43,3 +43,20 @@ body {
     height : 100px;
     cursor : hand;
 }
+
+#origin {
+    position : fixed;
+    top : 5px;
+    left : 10px;
+}
+
+#origin span {
+    font-size: 6pt;
+    color : #CCCCCC;
+}
+
+#origin a {
+    font-size: 6pt;
+    color : #CCCCCC;
+    text-decoration: underline;
+}
