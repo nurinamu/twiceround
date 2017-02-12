@@ -132,8 +132,37 @@ function cse(apiKey, cx, offset) {
                 }
 
             }
+
+        },
+        complete : function(xhr, textStatus) {
+            console.log("respose : " + xhr.status());
+            if (offset == 1 && xhr.status == 403) {
+                //backup recovery.
+                recovery();
+            }
         }
     })
+}
+
+function backup(items) {
+    console.log("try to backup items");
+    setToStorage({backup_items : items}, function(){
+        console.log("backup is complted : "+items.length);
+    });
+}
+
+function recovery() {
+    console.log("try to recovery items");
+    getFromStorage("backup_items", function(data){
+       if (data.backup_items && data.backup_items.length > 0) {
+            storeItems(data.backup_items, function(){
+                console.log("recovery is done.");
+                main();
+            });
+       } else {
+           console.log("There is no backup. --> need another action.");
+       }
+    });
 }
 
 function storeItems(data, callback) {
@@ -215,9 +244,14 @@ function showImgList() {
 }
 
 function clearAll() {
-    storeItems([], function () {
-        setOffset(1, function () {
-            console.log("clear all data");
+    getFromStorage("twice_items", function (data) {
+        if (data.twice_items && data.twice_items.length > 0) {
+            backup(data.twice_items);
+        }
+        storeItems([], function () {
+            setOffset(1, function () {
+                console.log("clear all data");
+            });
         });
     });
 }
