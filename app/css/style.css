@@ -59,9 +59,19 @@ body {
     cursor : hand;
 }
 
-#origin {
+#action {
     position : fixed;
     top : 5px;
+    left : 10px;
+}
+
+#action a {
+    cursor : hand;
+}
+
+#origin {
+    position : fixed;
+    bottom : 5px;
     left : 10px;
 }
 

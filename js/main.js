@@ -11,11 +11,13 @@ function init() {
     $("#addApiBtn").click(addApi);
     $("#listBtn").click(toggleStored);
     $("#settingsBtn").click(toggleSettings);
+    $("#disLikeBtn").click(dislike);
 
     main();
 }
 
 var isLandscape;
+var currentOffset;
 
 function main() {
     isLandscape = window.innerWidth > window.innerHeight;
@@ -114,7 +116,7 @@ function cse(apiKey, cx, offset) {
                         twiceItems.push({
                             url: resp.items[key].link,
                             isLandscape: resp.items[key].image.width > resp.items[key].image.height,
-                            thumbnail : resp.items[key].image.thumbnailLink
+                            thumbnail: resp.items[key].image.thumbnailLink
                         });
                     }
                     storeItems(twiceItems, function () {
@@ -134,7 +136,7 @@ function cse(apiKey, cx, offset) {
             }
 
         },
-        complete : function(xhr, textStatus) {
+        complete: function (xhr, textStatus) {
             console.log("respose : " + xhr.status());
             if (offset == 1 && xhr.status == 403) {
                 //backup recovery.
@@ -146,22 +148,22 @@ function cse(apiKey, cx, offset) {
 
 function backup(items) {
     console.log("try to backup items");
-    setToStorage({backup_items : items}, function(){
-        console.log("backup is complted : "+items.length);
+    setToStorage({backup_items: items}, function () {
+        console.log("backup is complted : " + items.length);
     });
 }
 
 function recovery() {
     console.log("try to recovery items");
-    getFromStorage("backup_items", function(data){
-       if (data.backup_items && data.backup_items.length > 0) {
-            storeItems(data.backup_items, function(){
+    getFromStorage("backup_items", function (data) {
+        if (data.backup_items && data.backup_items.length > 0) {
+            storeItems(data.backup_items, function () {
                 console.log("recovery is done.");
                 main();
             });
-       } else {
-           console.log("There is no backup. --> need another action.");
-       }
+        } else {
+            console.log("There is no backup. --> need another action.");
+        }
     });
 }
 
@@ -229,11 +231,15 @@ function showImgList() {
             imgRow = $("<tr></tr>");
             for (key in data.twice_items) {
                 imgCell = $("<td></td>");
-                newImg = $("<img></img>");
+                newImg = $("<img />");
                 newImg.attr("src", data.twice_items[key].thumbnail);
                 newImg.attr("data-url", data.twice_items[key].url);
+                newImg.attr("data-offset", (parseInt(key) + 1));
                 newImg.click(function (obj) {
                     setBackground($(obj.target).attr("data-url"));
+                    setOffset(nextOffset(parseInt($(obj.target).attr("data-offset"))), function () {
+                        console.log("[" + $(obj.target).attr("data-offset") + "] is selected");
+                    });
                 });
                 imgCell.append(newImg);
                 imgRow.append(imgCell);
@@ -263,4 +269,24 @@ function toggleSettings() {
 function setOriginInfo(url) {
     $("#origin a").attr("href", url);
     $("#origin a").text(url);
+}
+
+function dislike() {
+    getOffset(function (offset) {
+        console.log("[" + prevOffset(offset) + "] is disliked.");
+    });
+}
+
+function nextOffset(offset) {
+    if (++offset > maxOffset) {
+        offset = 1;
+    }
+    return offset;
+}
+
+function prevOffset(offset) {
+    if (--offset < 1) {
+        offset = maxOffset;
+    }
+    return offset;
 }
