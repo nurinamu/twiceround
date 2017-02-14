@@ -6,22 +6,24 @@ window.$ = window.jquery = $;
 init();
 
 function init() {
-    $("#imgBtn").click(main);
+    $("#imgBtn").click(showBackground);
     $("#clearBtn").click(clearAll);
     $("#addApiBtn").click(addApi);
     $("#listBtn").click(toggleStored);
     $("#settingsBtn").click(toggleSettings);
     $("#disLikeBtn").click(dislike);
 
-    main();
+    showBackground();
 }
 
 var isLandscape;
-var currentOffset;
+var myDislikes;
 
-function main() {
+function showBackground() {
     isLandscape = window.innerWidth > window.innerHeight;
     console.log("init twiceround->isLandscape[" + isLandscape + "]");
+    $("#imgList").css("display", "none");
+    $("#settings").css("display", "none");
     getFromStorage(["twice_cse_api_key", "twice_cse_cx"], function (data) {
         if (data) {
             if (data.twice_cse_api_key && data.twice_cse_cx) {
@@ -65,29 +67,46 @@ function start(apiKey, cx) {
     $("#cseApi").val(apiKey);
     $("#cx").val(cx);
 
-    getOffset(function (offset) {
-        getFromStorage("twice_items", function (data) {
-            console.log(data);
-            if (data.twice_items && data.twice_items.length >= offset) {
-                console.log("get from cache! ->" + offset);
-                if (isLandscape == data.twice_items[offset - 1].isLandscape) {
-                    setBackground(data.twice_items[offset - 1].url);
-                    setOffset(offset + 1, function () {
-                    });
+    getFromStorage("my_dislikes", function (data) {
+        if (data.my_dislikes) {
+            myDislikes = data.my_dislikes;
+        } else {
+            myDislikes = [];
+        }
+        getOffset(function (offset) {
+            getFromStorage("twice_items", function (data) {
+                console.log(data);
+                if (data.twice_items && data.twice_items.length >= offset) {
+                    console.log("get from cache! ->" + offset);
+                    if (isLandscape == data.twice_items[offset - 1].isLandscape) {
+                        setBackground(data.twice_items[offset - 1].url);
+                        setOffset(offset + 1, function () {
+                        });
+                    } else {
+                        setOffset(offset + 1, function () {
+                        });
+                        console.log("not matched orientation. go next");
+                        start(apiKey, cx);
+                    }
                 } else {
-                    setOffset(offset + 1, function () {
-                    });
-                    console.log("not matched orientation. go next");
-                    start(apiKey, cx);
+                    console.log("get search results ->" + offset);
+                    cse(apiKey, cx, offset);
                 }
-            } else {
-                console.log("get search results ->" + offset);
-                cse(apiKey, cx, offset);
-            }
+            });
         });
     });
+
 }
 
+function alreadyIncluded(twiceItems, url) {
+    for (var key in twiceItems) {
+        if (twiceItems[key].url == url) {
+            console.log("already included : " + url);
+            return true;
+        }
+    }
+    return false;
+}
 
 /**
  * google custom search engine을 사용
@@ -112,12 +131,22 @@ function cse(apiKey, cx, offset) {
                     if (twiceItems == undefined) {
                         twiceItems = [];
                     }
-                    for (key in resp.items) {
-                        twiceItems.push({
-                            url: resp.items[key].link,
-                            isLandscape: resp.items[key].image.width > resp.items[key].image.height,
-                            thumbnail: resp.items[key].image.thumbnailLink
-                        });
+                    for (var key in resp.items) {
+                        if (twiceItems.length < maxOffset) {
+                            if (myDislikes.indexOf(resp.items[key].link) < 0 &&
+                                !alreadyIncluded(twiceItems, resp.items[key].link)) {
+                                twiceItems.push({
+                                    url: resp.items[key].link,
+                                    isLandscape: resp.items[key].image.width > resp.items[key].image.height,
+                                    thumbnail: resp.items[key].image.thumbnailLink
+                                });
+                                console.log("added : " + resp.items[key].link);
+                            } else {
+                                console.log("skip : " + resp.items[key].link);
+                            }
+                        } else {
+                            break;
+                        }
                     }
                     storeItems(twiceItems, function () {
                         start(apiKey, cx);
@@ -137,7 +166,7 @@ function cse(apiKey, cx, offset) {
 
         },
         complete: function (xhr, textStatus) {
-            console.log("respose : " + xhr.status());
+            console.log("respose : " + xhr.status);
             if (offset == 1 && xhr.status == 403) {
                 //backup recovery.
                 recovery();
@@ -159,7 +188,7 @@ function recovery() {
         if (data.backup_items && data.backup_items.length > 0) {
             storeItems(data.backup_items, function () {
                 console.log("recovery is done.");
-                main();
+                showBackground();
             });
         } else {
             console.log("There is no backup. --> need another action.");
@@ -216,7 +245,6 @@ function toggleStored() {
     } else {
         $("#imgList").css("display", "none");
     }
-
 }
 
 function showImgList() {
@@ -254,9 +282,10 @@ function clearAll() {
         if (data.twice_items && data.twice_items.length > 0) {
             backup(data.twice_items);
         }
-        storeItems([], function () {
+        setToStorage({twice_items: []}, function () {
             setOffset(1, function () {
                 console.log("clear all data");
+                showBackground();
             });
         });
     });
@@ -273,7 +302,18 @@ function setOriginInfo(url) {
 
 function dislike() {
     getOffset(function (offset) {
-        console.log("[" + prevOffset(offset) + "] is disliked.");
+        getFromStorage("twice_items", function (data) {
+            currentKey = prevOffset(offset);
+            myDislikes.push(data.twice_items[currentKey - 1].url);
+            console.log(myDislikes);
+            console.log("[" + currentKey + "] is disliked. : " + data.twice_items[currentKey - 1].url);
+            data.twice_items.splice(currentKey - 1, 1);
+            setToStorage({my_dislikes: myDislikes, twice_items: data.twice_items}, function () {
+                setOffset(currentKey, function () {
+                    showBackground();
+                });
+            });
+        });
     });
 }
 

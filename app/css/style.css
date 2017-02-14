@@ -67,6 +67,8 @@ body {
 
 #action a {
     cursor : hand;
+    font-size: 12pt;
+    color : #CCCCCC;
 }
 
 #origin {
