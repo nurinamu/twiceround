@@ -18,6 +18,7 @@ function init() {
 
 var isLandscape;
 var myDislikes;
+var currentOffset;
 
 function showBackground() {
     isLandscape = window.innerWidth > window.innerHeight;
@@ -79,6 +80,7 @@ function start(apiKey, cx) {
                 if (data.twice_items && data.twice_items.length >= offset) {
                     console.log("get from cache! ->" + offset);
                     if (isLandscape == data.twice_items[offset - 1].isLandscape) {
+                        currentOffset = offset - 1;
                         setBackground(data.twice_items[offset - 1].url);
                         setOffset(offset + 1, function () {
                         });
@@ -272,10 +274,15 @@ function showImgList() {
                 newImg.attr("data-url", data.twice_items[key].url);
                 newImg.attr("data-offset", (parseInt(key) + 1));
                 newImg.click(function (obj) {
-                    setBackground($(obj.target).attr("data-url"));
-                    setOffset(nextOffset(parseInt($(obj.target).attr("data-offset"))), function () {
-                        console.log("[" + $(obj.target).attr("data-offset") + "] is selected");
-                    });
+                    if (currentOffset != parseInt($(obj.target).attr("data-offset"))) {
+                        currentOffset = parseInt($(obj.target).attr("data-offset"));
+                        setBackground($(obj.target).attr("data-url"));
+                        setOffset(nextOffset(parseInt($(obj.target).attr("data-offset"))), function () {
+                            console.log("[" + $(obj.target).attr("data-offset") + "] is selected");
+                        });
+                    } else {
+                        console.log("already displayed");
+                    }
                 });
                 imgCell.append(newImg);
                 imgRow.append(imgCell);
