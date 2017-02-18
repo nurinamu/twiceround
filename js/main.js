@@ -165,14 +165,22 @@ function cse(apiKey, cx, offset) {
             }
 
         },
-        complete: function (xhr, textStatus) {
-            console.log("respose : " + xhr.status);
-            if (offset == 1 && xhr.status == 403) {
-                //backup recovery.
-                recovery();
-            }
+        complete: function(xhr, textStatus) {
+            errorHandle(offset, xhr, textStatus);
         }
     })
+}
+
+function errorHandle(offset, xhr, textStatus) {
+    console.log("respose : " + xhr.status);
+    if (offset != 1 && xhr.status == 400) {
+        setOffset(1, function(){
+           showBackground();
+        });
+    } else if (offset == 1 && xhr.status == 403) {
+        //backup recovery.
+        recovery();
+    }
 }
 
 function backup(items) {
