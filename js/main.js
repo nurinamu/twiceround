@@ -175,7 +175,7 @@ function cse(apiKey, cx, offset) {
 
 function errorHandle(offset, xhr, textStatus) {
     console.log("respose : " + xhr.status);
-    if (offset != 1 && xhr.status == 400) {
+    if (offset != 1 && (xhr.status == 400 || xhr.status == 403)) {
         setOffset(1, function(){
            showBackground();
         });
