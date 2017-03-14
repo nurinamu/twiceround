@@ -1,6 +1,6 @@
 @file:Suppress("INTERFACE_WITH_SUPERCLASS", "OVERRIDING_FINAL_MEMBER", "RETURN_TYPE_MISMATCH_ON_OVERRIDE", "CONFLICTING_OVERLOADS")
 @file:JsQualifier("chrome.storage")
-package chrome.storage
+package ext.chrome
 
 import kotlin.js.*
 import kotlin.js.Json

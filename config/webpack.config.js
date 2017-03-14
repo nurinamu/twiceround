@@ -1,7 +1,7 @@
 var webpack = require("webpack");
 
 module.exports = [{
-    entry : ['./output/twiceround.js','./js/main.js'],
+    entry : ['./output/twiceround.js'],
     output : {
         filename: 'bundle.js',
         path: 'app/js'

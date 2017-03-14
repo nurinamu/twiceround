@@ -22,7 +22,7 @@ external interface JQueryAjaxSettings {
     var async: Boolean? get() = definedExternally; set(value) = definedExternally
     val beforeSend: ((jqXHR: JQueryXHR, settings: JQueryAjaxSettings) -> Any)? get() = definedExternally
     var cache: Boolean? get() = definedExternally; set(value) = definedExternally
-    val complete: ((jqXHR: JQueryXHR, textStatus: String) -> Any)? get() = definedExternally
+    var complete: ((jqXHR: JQueryXHR, textStatus: String) -> Any)? get() = definedExternally; set(value) = definedExternally
     var contents: Json? get() = definedExternally; set(value) = definedExternally
     var contentType: Any? get() = definedExternally; set(value) = definedExternally
     var context: Any? get() = definedExternally; set(value) = definedExternally
@@ -44,7 +44,7 @@ external interface JQueryAjaxSettings {
     var processData: Boolean? get() = definedExternally; set(value) = definedExternally
     var scriptCharset: String? get() = definedExternally; set(value) = definedExternally
     var statusCode: Json? get() = definedExternally; set(value) = definedExternally
-    val success: ((data: Any, textStatus: String, jqXHR: JQueryXHR) -> Any)? get() = definedExternally
+    var success: ((data: Any, textStatus: String, jqXHR: JQueryXHR) -> Any)? get() = definedExternally; set(value) = definedExternally
     var timeout: Number? get() = definedExternally; set(value) = definedExternally
     var traditional: Boolean? get() = definedExternally; set(value) = definedExternally
     var type: String? get() = definedExternally; set(value) = definedExternally
@@ -392,6 +392,7 @@ external interface JQuery {
     fun removeClass(className: String? = definedExternally /* null */): JQuery
     fun removeClass(func: (index: Number, className: String) -> String): JQuery
     fun removeProp(propertyName: String): JQuery
+    fun toggle(): JQuery
     fun toggleClass(className: String, swtch: Boolean? = definedExternally /* null */): JQuery
     fun toggleClass(swtch: Boolean? = definedExternally /* null */): JQuery
     fun toggleClass(func: (index: Number, className: String, swtch: Boolean) -> String, swtch: Boolean? = definedExternally /* null */): JQuery
@@ -772,6 +773,7 @@ external interface JQuery {
     fun queue(queueName: String, newQueue: Array<Function<*>>): JQuery
     fun queue(queueName: String, callback: Function<*>): JQuery
 }
-external var jQuery: JQueryStatic = definedExternally
+@JsName("$")
+external val jQuery: JQueryStatic = definedExternally
 @JsModule("jquery")
 external val `$`: JQueryStatic = definedExternally
