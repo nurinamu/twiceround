@@ -69,7 +69,7 @@ class TwiceRound {
                         it.apply {
                             if (get("twice_items") != null && (get("twice_items") as Array<Json>).size >= offset) {
                                 println("get from cache! -> $offset")
-                                (get("twice_items") as Array<Json>)[offset -1]?.let {
+                                (get("twice_items") as Array<Json>)[offset - 1]?.let {
                                     if (isLandscape == (it["isLandscape"] as Boolean?) ?: false) {
                                         currentOffset = offset - 1
                                         setBackground(it["url"] as String)
@@ -111,7 +111,7 @@ class TwiceRound {
 
     }
 
-    inner class CSERequest(val apiKey: String, val cx: String, val offset: Int?): JQueryAjaxSettings {
+    inner class CSERequest(val apiKey: String, val cx: String, val offset: Int?) : JQueryAjaxSettings {
 
         init {
             url = "https://www.googleapis.com/customsearch/v1?parameters"
@@ -149,7 +149,7 @@ class TwiceRound {
                                     return@forEach  //TODO
                                 }
                             }
-                        var updated:TwiceItems = TwiceItems(twiceItems)
+                        var updated: TwiceItems = TwiceItems(twiceItems)
                         local.set(updated) {
                             println("updated data!")
                             execute(apiKey, cx)
@@ -196,7 +196,7 @@ class TwiceRound {
         return false
     }
 
-    private fun getOffset(handleOffset:(offset: Int) -> Unit) {
+    private fun getOffset(handleOffset: (offset: Int) -> Unit) {
         local.get("twice_offset") {
             var twiceOffset: Int = (it?.get("twice_offset") ?: 1).toString().toInt()
             handleOffset(twiceOffset)
@@ -224,7 +224,7 @@ class TwiceRound {
                 if (it["twice_items"] != null && (it["twice_items"] as Array<Json>).size > 0) {
                     backup(it["twice_items"] as Array<Json>)
                 }
-            } catch (e:Exception) {
+            } catch (e: Exception) {
                 println(e.message)
             }
 
@@ -253,31 +253,62 @@ class TwiceRound {
 
     private fun dislike(eventObject: JQueryEventObject) {
         println("dislike")
-//        getOffset {
-//            offset ->
-//            local.get("twice_items") {
-//                var currentKey = prevOffset(offset)
-//                myDislikes.set(myDislikes.size, data.twice_items[currentKey - 1].url);
-//                console.log(myDislikes);
-//                console.log("[" + currentKey + "] is disliked. : " + data.twice_items[currentKey - 1].url);
-//                data.twice_items.splice(currentKey - 1, 1);
-//                setToStorage({my_dislikes: myDislikes, twice_items: data.twice_items}, function () {
-//                    setOffset(currentKey, function () {
-//                        showBackground();
-//                    });
-//                });
-//            }
-//        }
-//
-//        getOffset(function (offset) {
-//            getFromStorage("twice_items", function (data) {
-//
-//            });
-//        });
+        getOffset {
+            offset ->
+            local.get("twice_items") {
+                data ->
+                val twiceItems = data["twice_items"] as Array<Json>
+                val currentKey = prevOffset(offset)
+                val url = twiceItems[currentKey - 1].get("url") as String
+                myDislikes.set(myDislikes.size, url)
+                println(myDislikes)
+                println("[" + currentKey + "] is disliked. : " + url)
+
+                local.set(TwiceItemsWithDislikes(twiceItems.drop(currentKey - 1).toTypedArray(), myDislikes)) {
+                    setOffset(currentKey) {
+                        showBackground(null)
+                    }
+                }
+            }
+        }
     }
 
     private fun showImgList() {
         println("showImgList")
+        local.get("twice_items") {
+            data ->
+            println("get from cache to list!")
+            var twiceItems = data["twice_items"] as Array<Json>
+            var imgTable: dynamic = jQuery("#imgList table")
+            var imgRow: dynamic = jQuery("<tr></tr>")
+            twiceItems?.apply {
+                if (imgTable[0].rows.length > 0) {
+                    imgTable[0].deleteRow(0)
+                }
+            }.forEachIndexed {
+                idx, it ->
+                val imgCell: dynamic = jQuery("<td></td>")
+                val newImg: dynamic = jQuery("<img />")
+                newImg.attr("src", it["thumbnail"])
+                newImg.attr("data-url", it["url"])
+                newImg.click({
+                    obj ->
+                    println("click!! $idx : ${obj.target}")
+                    if (currentOffset != (idx+1)) {
+                        currentOffset = idx + 1
+                        setBackground(jQuery(obj.target).attr("data-url"))
+                        setOffset(nextOffset(idx + 1)) {
+                            println("[${idx+1}] is selected")
+                        }
+                    } else {
+                        println("already displayed")
+                    }
+                })
+                imgCell.append(newImg)
+                imgRow.append(imgCell)
+            }
+            imgTable.append(imgRow)
+        }
     }
 
     private fun nextOffset(offset: Int): Int {
@@ -304,3 +335,5 @@ external fun jQuery(selector: String): JQuery
 data class TwiceOffset(var twice_offset: Int)
 
 data class TwiceItems(var twice_items: Array<Json>)
+
+data class TwiceItemsWithDislikes(var twice_items: Array<Json>, var my_dislikes: Array<String>)
