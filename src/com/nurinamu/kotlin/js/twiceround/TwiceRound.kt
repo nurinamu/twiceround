@@ -66,23 +66,24 @@ class TwiceRound {
                 getOffset {
                     offset ->
                     local.get("twice_items") {
-                        it.apply {
-                            if (get("twice_items") != null && (get("twice_items") as Array<Json>).size >= offset) {
-                                println("get from cache! -> $offset")
-                                (get("twice_items") as Array<Json>)[offset - 1]?.let {
-                                    if (isLandscape == (it["isLandscape"] as Boolean?) ?: false) {
-                                        currentOffset = offset - 1
-                                        setBackground(it["url"] as String, it["thumbnail"] as String)
-                                        setOffset(offset + 1, {})
-                                    } else {
-                                        setOffset(offset + 1, {})
+                        val twiceItems = it["twice_items"] as Array<Json>
+                        println("current Size : ${twiceItems.size}")
+                        if (twiceItems.size >= offset) {
+                            println("get from cache! -> $offset")
+                            twiceItems[offset - 1]?.let {
+                                if (isLandscape == (it["isLandscape"] as Boolean?) ?: false) {
+                                    currentOffset = offset - 1
+                                    setBackground(it["url"] as String, it["thumbnail"] as String)
+                                    setOffset(offset + 1, {})
+                                } else {
+                                    setOffset(offset + 1, {
                                         execute(apiKey, cx)
-                                    }
+                                    })
                                 }
-                            } else {
-                                println("get search results -> $offset")
-                                ext.jQuery.ajax(CSERequest(apiKey, cx, offset))
                             }
+                        } else {
+                            println("get search results -> $offset")
+                            ext.jQuery.ajax(CSERequest(apiKey, cx, offset))
                         }
                     }
                 }
@@ -132,7 +133,7 @@ class TwiceRound {
             injectData["start"] = offset
             data = injectData
             success = fun(resp: Any, textStatus: String, jqXHR: JQueryXHR): Any {
-                println("success invoked")
+                println("success invoked from $offset")
                 var respJson: Json = resp as Json
                 if (respJson["items"] != null) {
                     local.get("twice_items") {
@@ -140,17 +141,20 @@ class TwiceRound {
 
                         (respJson["items"] as Array<Json>)
                             .forEach {
+                                val link = it["link"] as String
+                                val image = it["image"] as Json
+                                println("each : $link")
                                 if (twiceItems.size < maxOffset) {
-                                    if (myDislikes.indexOf(it["link"] as String) < 0 &&
-                                        !alreadyIncluded(twiceItems, it["link"] as String)) {
+                                    if (myDislikes.indexOf(link) < 0 &&
+                                        !alreadyIncluded(twiceItems, link)) {
                                         twiceItems.set(twiceItems.size, createTwiceItem(
-                                            it["link"] as String,
-                                            (it["image"] as Json)["width"] as Int > (it["image"] as Json)["height"] as Int,
-                                            (it["image"] as Json)["thumbnailLink"] as String
+                                            link,
+                                            image["width"] as Int > image["height"] as Int,
+                                            image["thumbnailLink"] as String
                                         ))
-                                        println("added : ${it["link"]}")
+                                        println("added : $link")
                                     } else {
-                                        println("skip : ${it["link"]}")
+                                        println("skip : $link")
                                     }
                                 } else {
                                     return@forEach  //TODO
@@ -193,6 +197,7 @@ class TwiceRound {
     }
 
     fun alreadyIncluded(twiceItems: Array<Json>, url: String): Boolean {
+        println("compare with $url")
         twiceItems.forEach {
             if (it["url"].toString() == url) {
                 println("already included : $url")
@@ -303,8 +308,11 @@ class TwiceRound {
                 myDislikes.set(myDislikes.size, url)
                 println(myDislikes)
                 println("[" + currentKey + "] is disliked. : " + url)
+                println("twiceImtes size : ${twiceItems.size}")
 
-                local.set(TwiceItemsWithDislikes(twiceItems.drop(currentKey - 1).toTypedArray(), myDislikes)) {
+                var tmp = twiceItems.toMutableList()
+                tmp.removeAt(currentKey - 1)
+                local.set(TwiceItemsWithDislikes(tmp.toTypedArray(), myDislikes)) {
                     setOffset(currentKey) {
                         showBackground(null)
                     }
@@ -341,7 +349,7 @@ class TwiceRound {
                             println("[${idx+1}] is selected")
                         }
                     } else {
-                        println("already displayed")
+                        println("already displayed [$currentOffset] == [${idx+1}]")
                     }
                 })
                 imgCell.append(newImg)
