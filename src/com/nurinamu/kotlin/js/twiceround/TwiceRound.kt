@@ -38,13 +38,8 @@ class TwiceRound {
         local.get(arrayOf("twice_cse_api_key", "twice_cse_cx"), this::handleStorage)
     }
 
-    private fun handleStorage(data: Json?) {
-        if (data == null) {
-            println("data is not existed")
-            return
-        }
-
-        data?.apply {
+    private fun handleStorage(data: Json) {
+        data.apply {
             if (get("twice_cse_api_key") != null && get("twice_cse_cx") != null) {
                 execute(get("twice_cse_api_key") as String, get("twice_cse_cx") as String)
             } else {
@@ -59,48 +54,37 @@ class TwiceRound {
         jQuery("#cx").`val`(cx)
 
         local.get("my_dislikes") {
-            data ->
-            data?.apply {
-                myDislikes = get("my_dislides") as Array<String>? ?: emptyArray()
+            myDislikes = it["my_dislides"] as Array<String>? ?: emptyArray()
 
-                getOffset {
-                    offset ->
-                    local.get("twice_items") {
-                        val twiceItems = it["twice_items"] as Array<Json>
-                        println("current Size : ${twiceItems.size}")
-                        if (twiceItems.size >= offset) {
-                            println("get from cache! -> $offset")
-                            twiceItems[offset - 1]?.let {
-                                if (isLandscape == (it["isLandscape"] as Boolean?) ?: false) {
-                                    currentOffset = offset - 1
-                                    setBackground(it["url"] as String, it["thumbnail"] as String)
-                                    setOffset(offset + 1, {})
-                                } else {
-                                    setOffset(offset + 1, {
-                                        execute(apiKey, cx)
-                                    })
-                                }
+            getOffset {
+                offset ->
+                local.get("twice_items") {
+                    val twiceItems = it["twice_items"] as Array<Json>
+                    println("current Size : ${twiceItems.size}")
+                    if (twiceItems.size >= offset) {
+                        println("get from cache! -> $offset")
+                        twiceItems[offset - 1]?.let {
+                            if (isLandscape == (it["isLandscape"] as Boolean?) ?: false) {
+                                currentOffset = offset - 1
+                                setBackground(it["url"] as String, it["thumbnail"] as String)
+                                setOffset(offset + 1, {})
+                            } else {
+                                setOffset(offset + 1, {
+                                    execute(apiKey, cx)
+                                })
                             }
-                        } else {
-                            println("get search results -> $offset")
-                            ext.jQuery.ajax(CSERequest(apiKey, cx, offset))
                         }
+                    } else {
+                        println("get search results -> $offset")
+                        ext.jQuery.ajax(CSERequest(apiKey, cx, offset))
                     }
                 }
             }
         }
     }
 
-    private fun setOffset(offset: Int, callback: () -> Unit) {
-        var decided = offset
-        if (offset > maxOffset) {
-            decided = 1
-        }
-        local.set(TwiceOffset(decided), callback)
-    }
-
     private fun setBackground(url: String, thumbnail: String) {
-        setOriginInfo(url)
+        url.setOriginInfo()
         var background = jQuery("body").css("background-image", "url('$thumbnail')")
 
         var tmpImg = jQuery("<img>")
@@ -112,26 +96,12 @@ class TwiceRound {
 
     }
 
-    private fun setOriginInfo(url: String) {
-        jQuery("#origin a").attr("href", url)
-        jQuery("#origin a").text(url)
-
-
-    }
-
     inner class CSERequest(val apiKey: String, val cx: String, val offset: Int?) : JQueryAjaxSettings {
 
         init {
             url = "https://www.googleapis.com/customsearch/v1?parameters"
             type = "GET"
-            val injectData: dynamic = js("({})")
-            injectData["key"] = apiKey
-            injectData["cx"] = cx
-            injectData["searchType"] = "image"
-            injectData["imgSize"] = "xxlarge"
-            injectData["q"] = queryStr
-            injectData["start"] = offset
-            data = injectData
+            data = createInjectData(apiKey, cx, offset, queryStr)
             success = fun(resp: Any, textStatus: String, jqXHR: JQueryXHR): Any {
                 println("success invoked from $offset")
                 var respJson: Json = resp as Json
@@ -186,8 +156,18 @@ class TwiceRound {
             }
         }
 
+        private fun createInjectData(apiKey: String, cx: String, offset: Int?, queryStr: String) {
+            val injectData: dynamic = js("({})")
+            injectData["key"] = apiKey
+            injectData["cx"] = cx
+            injectData["searchType"] = "image"
+            injectData["imgSize"] = "xxlarge"
+            injectData["q"] = queryStr
+            injectData["start"] = offset
+            return injectData
+        }
 
-        fun createTwiceItem(url: String, isLandscape: Boolean, thumbnail: String): Json {
+        private fun createTwiceItem(url: String, isLandscape: Boolean, thumbnail: String): Json {
             val res: dynamic = js("({})")
             res["url"] = url
             res["isLandscape"] = isLandscape
@@ -210,9 +190,12 @@ class TwiceRound {
 
     private fun getOffset(handleOffset: (offset: Int) -> Unit) {
         local.get("twice_offset") {
-            var twiceOffset: Int = (it?.get("twice_offset") ?: 1).toString().toInt()
-            handleOffset(twiceOffset)
+            handleOffset((it["twice_offset"] ?: 1) as Int)
         }
+    }
+
+    private fun setOffset(offset: Int, callback: () -> Unit) {
+        local.set(TwiceOffset(offset.validOffset(maxOffset)), callback)
     }
 
     private fun openApiInput() {
@@ -250,12 +233,12 @@ class TwiceRound {
         }
     }
 
-    private fun errorHandle(offset:Int, xhr:JQueryXHR, textStatus:String) {
+    private fun errorHandle(offset: Int, xhr: JQueryXHR, textStatus: String) {
         val status = xhr.status.toInt()
         println("error respose : $status")
 
         if (offset != 1 && (status == 400 || status == 403)) {
-            setOffset(1){
+            setOffset(1) {
                 showBackground(null)
             }
         } else if (offset == 1 && status == 403) {
@@ -274,9 +257,8 @@ class TwiceRound {
     private fun recovery() {
         println("try to recovery items")
         local.get("backup_items") {
-            data ->
-            val twiceItems = data["backup_items"] as Array<Json>
-            if ( twiceItems != null && twiceItems.size > 0) {
+            val twiceItems = it["backup_items"] as Array<Json>
+            if (twiceItems != null && twiceItems.size > 0) {
                 local.set(TwiceItems(twiceItems)) {
                     println("recovery is done.")
                     showBackground(null)
@@ -316,11 +298,11 @@ class TwiceRound {
             local.get("twice_items") {
                 data ->
                 val twiceItems = data["twice_items"] as Array<Json>
-                val currentKey = prevOffset(offset)
+                val currentKey = offset.prevOffset()
                 val url = twiceItems[currentKey - 1].get("url") as String
                 myDislikes.set(myDislikes.size, url)
                 println(myDislikes)
-                println("[" + currentKey + "] is disliked. : " + url)
+                println("[$currentKey] is disliked. : $url")
                 println("twiceImtes size : ${twiceItems.size}")
 
                 var tmp = twiceItems.toMutableList()
@@ -355,14 +337,14 @@ class TwiceRound {
                 newImg.click({
                     obj ->
                     println("click!! $idx : ${obj.target}")
-                    if (currentOffset != (idx+1)) {
+                    if (currentOffset != (idx + 1)) {
                         currentOffset = idx + 1
                         setBackground(jQuery(obj.target).attr("data-url"), it["thumbnail"] as String)
-                        setOffset(nextOffset(idx + 1)) {
-                            println("[${idx+1}] is selected")
+                        setOffset((idx + 1).nextOffset()) {
+                            println("[${idx + 1}] is selected")
                         }
                     } else {
-                        println("already displayed [$currentOffset] == [${idx+1}]")
+                        println("already displayed [$currentOffset] == [${idx + 1}]")
                     }
                 })
                 imgCell.append(newImg)
@@ -372,21 +354,16 @@ class TwiceRound {
         }
     }
 
-    private fun nextOffset(offset: Int): Int {
-        var updated = offset + 1
-        if (updated > maxOffset) {
-            return 1
-        }
-        return updated
+    private fun String.setOriginInfo() {
+        jQuery("#origin a").attr("href", this)
+        jQuery("#origin a").text(this)
     }
 
-    private fun prevOffset(offset: Int): Int {
-        var updated = offset - 1
-        if (updated < 1) {
-            return maxOffset
-        }
-        return updated
-    }
+    private fun Int.validOffset(maxOffset: Int): Int = if (this > maxOffset) 1 else this
+
+    private fun Int.nextOffset(): Int = if ((this + 1) > maxOffset) 1 else (this + 1)
+
+    private fun Int.prevOffset(): Int = if ((this - 1) < 1) maxOffset else (this - 1)
 
 }
 
