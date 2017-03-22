@@ -289,6 +289,19 @@ class TwiceRound {
 
     private fun addApi(eventObject: JQueryEventObject) {
         println("addApi")
+        var newKey = (jQuery("#cseApi").`val`() as String).trim()
+        var newCx = (jQuery("#cx").`val`() as String).trim()
+        if (newKey.isBlank()) {
+            window.alert("api key is needed.")
+            return
+        }
+        if (newCx.isBlank()) {
+            window.alert("cx value is needed");
+            return
+        }
+        local.set(TwiceApiKey(newKey, newCx)) {
+            execute(newKey, newCx)
+        }
     }
 
     private fun toggleSettings(eventObject: JQueryEventObject) {
@@ -379,6 +392,8 @@ class TwiceRound {
 
 @JsName("$")
 external fun jQuery(selector: String): JQuery
+
+data class TwiceApiKey(var twice_cse_api_key: String, var twice_cse_cx: String)
 
 data class TwiceOffset(var twice_offset: Int)
 
