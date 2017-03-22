@@ -72,7 +72,7 @@ class TwiceRound {
                                 (get("twice_items") as Array<Json>)[offset - 1]?.let {
                                     if (isLandscape == (it["isLandscape"] as Boolean?) ?: false) {
                                         currentOffset = offset - 1
-                                        setBackground(it["url"] as String)
+                                        setBackground(it["url"] as String, it["thumbnail"] as String)
                                         setOffset(offset + 1, {})
                                     } else {
                                         setOffset(offset + 1, {})
@@ -81,7 +81,6 @@ class TwiceRound {
                                 }
                             } else {
                                 println("get search results -> $offset")
-//                                cse(apiKey, cx, offset)
                                 ext.jQuery.ajax(CSERequest(apiKey, cx, offset))
                             }
                         }
@@ -99,9 +98,17 @@ class TwiceRound {
         local.set(TwiceOffset(decided), callback)
     }
 
-    private fun setBackground(url: String) {
+    private fun setBackground(url: String, thumbnail: String) {
         setOriginInfo(url)
-        jQuery("body").css("background-image", "url('$url')")
+        var background = jQuery("body").css("background-image", "url('$thumbnail')")
+
+        var tmpImg = jQuery("<img>")
+        tmpImg.attr("src", url)
+        tmpImg.on("load") { jQueryEventObject: JQueryEventObject, any: Any ->
+            println("org img is loaded")
+            background.css("background-image", "url('$url')")
+        }
+
     }
 
     private fun setOriginInfo(url: String) {
@@ -170,7 +177,7 @@ class TwiceRound {
             }
 
             complete = fun(jqXHR: JQueryXHR, textStatus: String): Any {
-//                errorHandle(offset, xhr, textStatus)
+                errorHandle(offset ?: 1, jqXHR, textStatus)
                 return true
             }
         }
@@ -238,8 +245,41 @@ class TwiceRound {
         }
     }
 
-    private fun backup(twiceItems: Array<Json>) {
+    private fun errorHandle(offset:Int, xhr:JQueryXHR, textStatus:String) {
+        val status = xhr.status.toInt()
+        println("error respose : $status")
 
+        if (offset != 1 && (status == 400 || status == 403)) {
+            setOffset(1){
+                showBackground(null)
+            }
+        } else if (offset == 1 && status == 403) {
+            //backup recovery.
+            recovery()
+        }
+    }
+
+
+    private fun backup(twiceItems: Array<Json>) {
+        local.set(TwiceBackupItems(twiceItems)) {
+            println("backup is complted : " + twiceItems.size)
+        }
+    }
+
+    private fun recovery() {
+        println("try to recovery items")
+        local.get("backup_items") {
+            data ->
+            val twiceItems = data["backup_items"] as Array<Json>
+            if ( twiceItems != null && twiceItems.size > 0) {
+                local.set(TwiceItems(twiceItems)) {
+                    println("recovery is done.")
+                    showBackground(null)
+                }
+            } else {
+                println("There is no backup. --> need another action.")
+            }
+        }
     }
 
     private fun addApi(eventObject: JQueryEventObject) {
@@ -296,7 +336,7 @@ class TwiceRound {
                     println("click!! $idx : ${obj.target}")
                     if (currentOffset != (idx+1)) {
                         currentOffset = idx + 1
-                        setBackground(jQuery(obj.target).attr("data-url"))
+                        setBackground(jQuery(obj.target).attr("data-url"), it["thumbnail"] as String)
                         setOffset(nextOffset(idx + 1)) {
                             println("[${idx+1}] is selected")
                         }
@@ -335,5 +375,7 @@ external fun jQuery(selector: String): JQuery
 data class TwiceOffset(var twice_offset: Int)
 
 data class TwiceItems(var twice_items: Array<Json>)
+
+data class TwiceBackupItems(var backup_items: Array<Json>)
 
 data class TwiceItemsWithDislikes(var twice_items: Array<Json>, var my_dislikes: Array<String>)
