@@ -61,8 +61,12 @@ class TwiceRound {
                             }
                         }
                     } else {
-                        println("get search results -> $offset")
-                        ext.jQuery.ajax(CSERequest(apiKey, cx, offset, this))
+                        getCurosr(offset) {
+                            cursor ->
+                            println("get search results -> $cursor")
+                            ext.jQuery.ajax(CSERequest(apiKey, cx, cursor, this))
+                        }
+
                     }
                 }
             }
@@ -260,6 +264,8 @@ data class TwiceApiKey(var twice_cse_api_key: String, var twice_cse_cx: String)
 
 data class TwiceOffset(var twice_offset: Int)
 
+data class TwiceCursor(var twice_cursor: Int)
+
 data class TwiceItems(var twice_items: Array<Json>)
 
 data class TwiceBackupItems(var backup_items: Array<Json>)
@@ -269,6 +275,12 @@ data class TwiceItemsWithDislikes(var twice_items: Array<Json>, var my_dislikes:
 fun getOffset(handleOffset: (offset: Int) -> Unit) {
     local.get("twice_offset") {
         handleOffset((it["twice_offset"] ?: 1) as Int)
+    }
+}
+
+fun getCurosr(offset: Int, handleCursor: (cursor: Int) -> Unit) {
+    local.get("twice_cursor") {
+        handleCursor((it["twice_cursor"] ?: offset) as Int)
     }
 }
 
