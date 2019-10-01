@@ -3,3 +3,4 @@ apiKey
 node_modules/
 yarn.lock
 app/js/bundle.js
+package-lock.json
