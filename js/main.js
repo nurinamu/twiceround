@@ -1,6 +1,6 @@
 //import $ from 'jquery';
-var $ = require('jquery');
-var maxOffset = 100;
+var $ = require('jQuery');
+var maxOffset = 1000;
 var queryStr = 'twice';
 window.$ = window.jquery = $;
 init();
